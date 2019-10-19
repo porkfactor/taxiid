@@ -1,6 +1,149 @@
 #include <iostream>
 #include <cpprest/http_listener.h>
 
+class basic_taxii_listener
+{
+public:
+    basic_taxii_listener(web::http::uri const &uri) : listener_(uri)
+    {
+        listener_.support(web::http::methods::GET, std::bind(&basic_taxii_listener::get, this, std::placeholders::_1));
+        listener_.support(web::http::methods::PUT, std::bind(&basic_taxii_listener::put, this, std::placeholders::_1));
+    }
+
+    virtual ~basic_taxii_listener()
+    {
+
+    }
+
+    void get(web::http::http_request request)
+    {
+        if(check_headers(request.headers))
+        {
+
+        }
+        else
+        {
+            request.reply(web::http::status_codes::NotFound);
+        }
+
+
+        /*
+         * 2/ check authentication method(s)
+         * 3/ check uri, handover to handler
+         * 4/ check
+         * 
+         */
+    }
+
+    void put(web::http::http_request request)
+    {
+
+    }
+
+protected:
+    bool check_headers(web::http::http_headers const &headers)
+    {
+        for(auto const &header : headers)
+        {
+            if(header.first == web::http::header_names::accept)
+            {
+
+            }
+            else if(header.first == web::http::header_names::accept_ranges)
+            {
+
+            }
+            else if(header.first == web::http::header_names::authorization)
+            {
+
+            }
+            else if(header.first == web::http::header_names::content_range)
+            {
+
+            }
+            else if(header.first == web::http::header_names::content_type)
+            {
+
+            }
+            else if(header.first == web::http::header_names::range)
+            {
+
+            }
+            else if(header.first == web::http::header_names::www_authenticate)
+            {
+
+            }
+        }
+
+        return true;
+    }
+
+private:
+    web::http::experimental::listener::http_listener listener_;
+};
+
+class basic_taxii_service
+{
+public:
+    basic_taxii_service(web::http::uri const &uri) :
+        listener_(uri)
+    {
+
+    }
+
+protected:
+
+private:
+    basic_taxii_listener listener_;
+};
+
+class basic_discovery_service : public basic_taxii_service
+{
+public:
+    basic_discovery_service(web::http::uri const &uri) :
+        basic_taxii_service(uri)
+    {
+
+    }
+
+private:
+
+};
+
+class basic_poll_service : public basic_taxii_service
+{
+public:
+    basic_poll_service(web::http::uri const &uri) :
+        basic_taxii_service(uri)
+    {
+
+    }
+
+private:
+
+};
+
+class basic_inbox_service : public basic_taxii_service
+{
+public:
+    basic_inbox_service(web::http::uri const &uri) :
+        basic_taxii_service(uri)
+    {
+
+    }
+
+private:
+
+};
+
+class collection
+{
+public:
+
+private:
+
+};
+
 namespace cfx {
     class BasicController {
     public:
@@ -46,6 +189,7 @@ namespace cfx {
 
         std::vector<utility::string_t> requestPath(const web::http::http_request & message) {
             auto relativePath = web::http::uri::decode(message.relative_uri().path());
+
             return web::http::uri::split_path(relativePath);        
         }
 
@@ -91,20 +235,24 @@ private:
 };
 
 int main(int argc, const char * argv[]) {
-    MicroserviceController server;
-    server.setEndpoint("http://host_auto_ip4:6502/v1/ivmero/api");
+    MicroserviceController s1, s2;
+    s1.setEndpoint("http://host_auto_ip4:6502/abc");
+    s2.setEndpoint("http://host_auto_ip4:6502/xyz");
     
     try {
         // wait for server initialization...
-        server.accept().wait();
-        std::cout << "Modern C++ Microservice now listening for requests at: " << server.endpoint() << '\n';
+        s1.accept().wait();
+        s2.accept().wait();
+        std::cout << "Modern C++ Microservice now listening for requests at: " << s1.endpoint() << '\n';
+        std::cout << "Modern C++ Microservice now listening for requests at: " << s2.endpoint() << '\n';
    
         while(1)
         {
             sleep(100);
         }
 
-        server.shutdown().wait();
+        s1.shutdown().wait();
+        s2.shutdown().wait();
     }
     catch(std::exception & e) {
         std::cerr << e.what() << "\n";
