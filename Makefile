@@ -1,7 +1,7 @@
 SHELL=/bin/sh
 
 CXX=g++
-CXXFLAGS=-std=c++11 -g -O0
+CXXFLAGS=-std=c++11 -g -O0 -pthread
 LDLIBS=-lcpprest -lboost_system -lssl -lcrypto
 
 TARGET=taxiid

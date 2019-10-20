@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cpprest/http_listener.h>
+#include "log.hpp"
 
 class basic_taxii_listener
 {
@@ -17,7 +18,7 @@ public:
 
     void get(web::http::http_request request)
     {
-        if(check_headers(request.headers))
+        if(check_headers(request.headers()))
         {
 
         }
@@ -218,7 +219,16 @@ class MicroserviceController : public cfx::BasicController, cfx::Controller {
 public:
     MicroserviceController() : BasicController() {}
     ~MicroserviceController() {}
-    void handleGet(web::http::http_request message) override { }
+    void handleGet(web::http::http_request message) override {
+        std::cout << "request.uri = [" 
+            << "absolute: " << message.absolute_uri().to_string()
+            << ","
+            << "relative: " << message.relative_uri().to_string()
+            << "]"
+            << std::endl;
+
+        message.reply(web::http::status_codes::OK);
+    }
     void handlePut(web::http::http_request message) override { }
     void handlePost(web::http::http_request message) override { }
     void handlePatch(web::http::http_request message) override { }
@@ -228,7 +238,14 @@ public:
     void handleTrace(web::http::http_request message) override { }
     void handleConnect(web::http::http_request message) override { }
     void handleMerge(web::http::http_request message) override { }
-    void initRestOpHandlers() override { }
+    void initRestOpHandlers() override
+    {
+        _listener.support(web::http::methods::GET, std::bind(&MicroserviceController::handleGet, this, std::placeholders::_1));
+        _listener.support(web::http::methods::PUT, std::bind(&MicroserviceController::handlePut, this, std::placeholders::_1));
+        _listener.support(web::http::methods::POST, std::bind(&MicroserviceController::handlePost, this, std::placeholders::_1));
+        _listener.support(web::http::methods::DEL, std::bind(&MicroserviceController::handleDelete, this, std::placeholders::_1));
+        _listener.support(web::http::methods::PATCH, std::bind(&MicroserviceController::handlePatch, this, std::placeholders::_1));
+    }
 
 private:
     static web::json::value responseNotImpl(const web::http::method & method);
@@ -239,12 +256,16 @@ int main(int argc, const char * argv[]) {
     s1.setEndpoint("http://host_auto_ip4:6502/abc");
     s2.setEndpoint("http://host_auto_ip4:6502/xyz");
     
+    auto logger = spdlog::stdout_color_mt("console");
+
+    spdlog::set_default_logger(logger);
+
     try {
         // wait for server initialization...
         s1.accept().wait();
         s2.accept().wait();
-        std::cout << "Modern C++ Microservice now listening for requests at: " << s1.endpoint() << '\n';
-        std::cout << "Modern C++ Microservice now listening for requests at: " << s2.endpoint() << '\n';
+        spdlog::info("Modern C++ Microservice now listening for requests at: {}", s1.endpoint());
+        spdlog::info("Modern C++ Microservice now listening for requests at: {}", s2.endpoint());
    
         while(1)
         {
@@ -255,7 +276,7 @@ int main(int argc, const char * argv[]) {
         s2.shutdown().wait();
     }
     catch(std::exception & e) {
-        std::cerr << e.what() << "\n";
+        spdlog::error("exception: {}", e.what());
     }
     catch(...) {
         // RuntimeUtils::printStackTrace();
