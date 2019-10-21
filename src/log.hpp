@@ -7,20 +7,38 @@
 #if !defined SPDLOG_VER_MAJOR
 namespace spdlog
 {
+    template<typename _Type>
+    class singleton
+    {
+    public:
+        static _Type &instance()
+        {
+            static _Type instance;
+
+            return instance;
+        }
+
+        singleton(singleton const &) = delete;
+        void operator = (singleton const &) = delete;
+        
+    private:
+        singleton() { }
+    };
+
+    typedef singleton<std::shared_ptr<spdlog::logger>> dlog;
+
     typedef char const *string_view_t;
 
-    static std::shared_ptr<spdlog::logger> dlog;
-
-    std::shared_ptr<spdlog::logger> default_logger() { return dlog; }
+    inline std::shared_ptr<spdlog::logger> default_logger() { return dlog::instance(); }
 
     inline spdlog::logger *default_logger_raw()
     {
-        return dlog.get();
+        return dlog::instance().get();
     }
 
     inline void set_default_logger(std::shared_ptr<spdlog::logger> default_logger)
     {
-        dlog = default_logger;
+        dlog::instance() = default_logger;
     }
 
 #if 0

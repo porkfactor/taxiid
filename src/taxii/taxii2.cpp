@@ -1,5 +1,7 @@
 #include <cpprest/http_msg.h>
 #include <rapidjson/writer.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <taxii/taxii.hpp>
 
 namespace taxii
 {
@@ -43,80 +45,52 @@ namespace taxii
     };
 }
 
-class taxii_collection
-{
-public:
-    std::string id;
-    std::string title;
-    std::string description;
-    bool can_read;
-    bool can_write;
-};
-
-class taxii_api
-{
-public:
-    std::string title;
-    std::string description;
-    std::string uri;
-    uint64_t max_content_length;
-
-    std::vector<taxii_collection> collections;
-};
-
-class taxii_service
-{
-public:
-    std::string title;
-    std::string description;
-    std::string contact;
-    std::string uri; /* default API */
-
-    std::vector<taxii_api> api;
-};
-
-void taxii2_discovery(web::http::http_request &request, taxii_service &service)
+void taxii2_discovery(web::http::http_request &request, taxii::service &service)
 {
     std::stringstream ss;
-    rapidjson::Writer w(ss);
+#if 0
+    rapidjson::Writer<rapidjson::OStreamWrapper> w(rapidjson::OStreamWrapper(ss));
 
     w.StartObject();
     w.Key(taxii::taxii2::keys::title);
-    w.String(service.title.c_str(), service.title.length(), false);
+    w.String(service.title().c_str(), service.title().length(), false);
     w.Key(taxii::taxii2::keys::description);
-    w.String(service.description.c_str(), service.description.length(), false);
+    w.String(service.description().c_str(), service.description().length(), false);
     w.Key(taxii::taxii2::keys::contact);
-    w.String(service.contact.c_str(), service.contact.length(), false);
+    w.String(service.contact().c_str(), service.contact().length(), false);
     w.Key(taxii::taxii2::keys::dflt);
     w.String(service.uri.c_str(), service.uri.length(), false);
 
     w.Key(taxii::taxii2::keys::api_roots);
     w.StartArray();
-    for(auto const &i : service.api)
+    for(auto const &i : service.apis())
     {
         w.String(i.uri.c_str(), i.uri.length());
     }
     w.EndArray();
+#endif
 
     request.reply(web::http::status_codes::OK, ss.str());
 }
 
-void taxii2_api_root(web::http::http_request &request, taxii_api &api)
+void taxii2_api_root(web::http::http_request &request, taxii::api &api)
 {
     std::stringstream ss;
+#if 0
     rapidjson::Writer w(ss);
 
     w.StartObject();
     w.Key(taxii::taxii2::keys::title);
     w.String(api.title.c_str(), api.title.length(), false);
     w.Key(taxii::taxii2::keys::description);
-    w.String(api.description.c_str(), api.description.length(), false);
+    w.String(api.description().c_str(), api.description().length(), false);
     w.Key(taxii::taxii2::keys::versions);
     w.StartArray();
     w.EndArray();
     w.Key(taxii::taxii2::keys::max_content_length);
     w.Uint64(api.max_content_length);
     w.EndObject();
+#endif
 
     request.reply(web::http::status_codes::OK, ss.str());
 }
@@ -124,9 +98,10 @@ void taxii2_api_root(web::http::http_request &request, taxii_api &api)
 /*
  * GET http://example.org/<api>/status/<id>/
  */
-void taxii2_status(web::http::http_request &request, taxii_api &api)
+void taxii2_status(web::http::http_request &request, taxii::api &api)
 {
     std::stringstream ss;
+#if 0
     rapidjson::Writer w(ss);
 
     /* id: required */
@@ -177,48 +152,56 @@ void taxii2_status(web::http::http_request &request, taxii_api &api)
     w.StartArray();
     w.EndArray();
     w.EndObject();
+#endif
+
+    request.reply(web::http::status_codes::OK, ss.str());
 }
 
 /*
  * GET http://example.org/<api>/collections
  */
-void taxii2_collections(web::http::http_request &request, taxii_api &api)
+void taxii2_collections(web::http::http_request &request, taxii::api &api)
 {
     std::stringstream ss;
+#if 0
     rapidjson::Writer w(ss);
 
     w.StartObject();
     w.Key(taxii::taxii2::keys::collections);
     w.StartArray();
 
-    for(auto const &collection : api.collections)
+    for(auto const &collection : api.collections())
     {
         w.StartObject();
         w.Key(taxii::taxii2::keys::id);
-        w.String(collection.id.c_str(), collection.id.length());
+        w.String(collection.id().c_str(), collection.id().length());
         w.Key(taxii::taxii2::keys::title);
         w.String(collection.title.c_str(), collection.title.length());
         w.Key(taxii::taxii2::keys::description);
         w.String(collection.description.c_str(), collection.description.length());
         w.Key(taxii::taxii2::keys::can_read);
-        w.Bool(collection.can_read);
+        w.Bool(collection.can_read());
         w.Key(taxii::taxii2::keys::can_write);
-        w.Bool(collection.can_write);
+        w.Bool(collection.can_write());
         w.EndObject();
     }
 
     w.EndArray();
 
     w.EndObject();
+#endif
+
+    request.reply(web::http::status_codes::OK, ss.str());
 }
 
 /*
  * GET http://example.org/<api>/collections/<id>/manifest
  */
-void taxii2_manifest(web::http::http_request &request, taxii_api &api)
+void taxii2_manifest(web::http::http_request &request, taxii::api &api)
 {
     std::stringstream ss;
-    rapidjson::Writer w(ss);
+#if 0
+    rapidjson::Writer<rapidjson::OStreamWrapper> w(rapidjson::OStreamWrapper(ss));
 
     /* locate the collection */
 
@@ -247,4 +230,7 @@ void taxii2_manifest(web::http::http_request &request, taxii_api &api)
     w.EndArray();
 
     w.EndObject();
+#endif
+
+    request.reply(web::http::status_codes::OK, ss.str());
 }
