@@ -69,118 +69,76 @@ namespace taxii
 
         response.set_body(o);
     }
-}
 
-void taxii2_api_root(web::http::http_request &request, taxii::api &api)
-{
-    web::json::value o = web::json::value::object();
-
-    o[taxii::taxii2::keys::title] = web::json::value(api.title());
-    o[taxii::taxii2::keys::description] = web::json::value(api.description());
-    o[taxii::taxii2::keys::versions] = web::json::value::array();
-    o[taxii::taxii2::keys::max_content_length] = web::json::value::number(0);
-
-    request.reply(web::http::status_codes::OK, o);
-}
-
-/*
- * GET http://example.org/<api>/status/<id>/
- */
-void taxii2_status(web::http::http_request &request, taxii::api &api)
-{
-    std::stringstream ss;
-#if 0
-    rapidjson::Writer w(ss);
-
-    /* id: required */
-    w.Key(taxii::taxii2::keys::id);
-    w.String(""); /* TODO: ID string */
-    /* status: required */
-    w.Key(taxii::taxii2::keys::status);
-    w.String(taxii::taxii2::status::pending); /* TODO: status */
-    /* request_timestamp: optional */
-    w.Key(taxii::taxii2::keys::request_timestamp);
-    w.String(""); /* TODO */
-
-    /* total_count: required */
-    w.Key(taxii::taxii2::keys::total_count);
-    w.Uint64(0); /* TODO */
-
-    /* success_count: required */
-    w.Key(taxii::taxii2::keys::success_count);
-    w.Uint64(0); /* TODO */
-
-    /* successes: optional */
-    w.Key(taxii::taxii2::keys::successes);
-    w.StartArray();
-    w.EndArray();
-
-    /* failure_count: required */
-    w.Key(taxii::taxii2::keys::failure_count);
-    w.Uint64(0); /* TODO */
-
-    /* failures: optional */
-    w.Key(taxii::taxii2::keys::failures);
-    w.StartArray();
-    /*
-        w.StartObject();
-        w.Key(taxii::taxii2::keys::id);
-        w.Key(taxii::taxii2::keys::message);
-        w.EndObject();
-
-     */
-    w.EndArray();
-
-    /* pending_count: required */
-    w.Key(taxii::taxii2::keys::pending_count);
-    w.Uint64(0); /* TODO */
-
-    /* pendings: optional */
-    w.Key(taxii::taxii2::keys::pendings);
-    w.StartArray();
-    w.EndArray();
-    w.EndObject();
-#endif
-
-    request.reply(web::http::status_codes::OK, ss.str());
-}
-
-/*
- * GET http://example.org/<api>/collections
- */
-void taxii2_collections(web::http::http_request &request, taxii::api &api)
-{
-    std::stringstream ss;
-#if 0
-    rapidjson::Writer w(ss);
-
-    w.StartObject();
-    w.Key(taxii::taxii2::keys::collections);
-    w.StartArray();
-
-    for(auto const &collection : api.collections())
+    void taxii2_api_root(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api)
     {
-        w.StartObject();
-        w.Key(taxii::taxii2::keys::id);
-        w.String(collection.id().c_str(), collection.id().length());
-        w.Key(taxii::taxii2::keys::title);
-        w.String(collection.title.c_str(), collection.title.length());
-        w.Key(taxii::taxii2::keys::description);
-        w.String(collection.description.c_str(), collection.description.length());
-        w.Key(taxii::taxii2::keys::can_read);
-        w.Bool(collection.can_read());
-        w.Key(taxii::taxii2::keys::can_write);
-        w.Bool(collection.can_write());
-        w.EndObject();
+        web::json::value o = web::json::value::object();
+
+        o[taxii::taxii2::keys::title] = web::json::value(api.title());
+        o[taxii::taxii2::keys::description] = web::json::value(api.description());
+        o[taxii::taxii2::keys::versions] = web::json::value::array();
+        o[taxii::taxii2::keys::max_content_length] = web::json::value::number(0);
+
+        response.set_body(o);
     }
 
-    w.EndArray();
+    /*
+    * GET http://example.org/<api>/status/<id>/
+    */
+    void taxii2_api_status(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api)
+    {
+        web::json::value o = web::json::value::object();
 
-    w.EndObject();
-#endif
+        o[taxii::taxii2::keys::id] = web::json::value::string("");
+        o[taxii::taxii2::keys::status] = web::json::value::string(taxii::taxii2::status::pending);
+        o[taxii::taxii2::keys::request_timestamp] = web::json::value::string("");
+        o[taxii::taxii2::keys::total_count] = web::json::value::number(0);
+        o[taxii::taxii2::keys::success_count] = web::json::value::number(0);
+        o[taxii::taxii2::keys::successes] = web::json::value::array();
+        o[taxii::taxii2::keys::failure_count] = web::json::value::number(0);
+        o[taxii::taxii2::keys::failures] = web::json::value::array();
+        o[taxii::taxii2::keys::pending_count] = web::json::value::number(0);
+        o[taxii::taxii2::keys::pendings] = web::json::value::array();
 
-    request.reply(web::http::status_codes::OK, ss.str());
+        response.set_body(o);
+    }
+
+    /*
+    * GET http://example.org/<api>/collections
+    */
+    void taxii2_api_collections(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api)
+    {
+        web::json::value o = web::json::value::object();
+        web::json::value a = web::json::value::array();
+
+        for(auto const &collection : api.collections())
+        {
+            web::json::value c = web::json::value::object();
+            
+            c[taxii::taxii2::keys::id] = web::json::value::string(collection->id());
+            c[taxii::taxii2::keys::title] = web::json::value::string(collection->title());
+            c[taxii::taxii2::keys::description] = web::json::value::string(collection->description());
+            c[taxii::taxii2::keys::can_read] = web::json::value::boolean(collection->can_read());
+            c[taxii::taxii2::keys::can_write] = web::json::value::boolean(collection->can_write());
+
+            a[a.size()] = c;
+        }
+
+        o[taxii::taxii2::keys::collections] = a;
+
+        response.set_body(o);
+    }
 }
+
 
 /*
  * GET http://example.org/<api>/collections/<id>/manifest

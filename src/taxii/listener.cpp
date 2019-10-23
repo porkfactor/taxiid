@@ -112,10 +112,25 @@ namespace taxii
         web::http::experimental::listener::http_listener listener_;
     };
 
-    extern void taxii2_discovery(web::http::http_request &request,
-        web::http::http_response &response,
-        taxii::service &service);
+    extern void taxii2_discovery(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::service &service);
 
+    extern void taxii2_api_root(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api);
+
+    extern void taxii2_api_status(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api);
+
+    extern void taxii2_api_collections(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::api &api);
 
     class basic_discovery_service : public basic_taxii_listener
     {
@@ -146,6 +161,11 @@ namespace taxii
 
         }
 
+        virtual void perform_get(web::http::http_request &request, web::http::http_response &response) override
+        {
+            taxii2_api_root(request, response, *api_);
+        }
+
     private:
         std::shared_ptr<taxii::api> api_;
     };
@@ -160,6 +180,11 @@ namespace taxii
 
         }
 
+        virtual void perform_get(web::http::http_request &request, web::http::http_response &response) override
+        {
+            taxii2_api_status(request, response, *api_);
+        }
+
     private:
         std::shared_ptr<taxii::api> api_;
     };
@@ -172,6 +197,11 @@ namespace taxii
             api_(a)
         {
 
+        }
+
+        virtual void perform_get(web::http::http_request &request, web::http::http_response &response) override
+        {
+            taxii2_api_collections(request, response, *api_);
         }
 
     private:

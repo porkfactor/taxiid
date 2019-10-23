@@ -8,6 +8,7 @@ LDLIBS=-lcpprest -lboost_system -lssl -lcrypto
 TARGET=taxiid
 
 SOURCES=\
+	src/taxii/api.cpp \
 	src/taxii/listener.cpp \
 	src/taxii/service.cpp \
 	src/taxii/taxii2.cpp \

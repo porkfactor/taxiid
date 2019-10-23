@@ -26,7 +26,7 @@ int main(int argc, const char * argv[]) {
         taxii::listener tl("http://mimsy.local:6502", ts);
 
         ts->createApi("abc");
-        ts->createApi("xyz");
+        ts->createApi("xyz")->createCollection("wine");
 //        ts->createApi("xyz")->createCollection("wine");
 
         while(1)

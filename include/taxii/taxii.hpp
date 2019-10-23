@@ -76,7 +76,7 @@ namespace taxii
     class api
     {
     public:
-        typedef std::vector<collection> collection_container_type;
+        typedef std::vector<std::shared_ptr<collection>> collection_container_type;
         typedef taxii::string_type string_type;
 
         api(string_type const &t, string_type const &d) :
