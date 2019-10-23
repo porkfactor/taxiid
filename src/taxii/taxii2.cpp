@@ -1,7 +1,7 @@
 #include <cpprest/http_msg.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/ostreamwrapper.h>
+#include <cpprest/json.h>
 #include <taxii/taxii.hpp>
+#include "json.hpp"
 
 namespace taxii
 {
@@ -45,54 +45,42 @@ namespace taxii
     };
 }
 
-void taxii2_discovery(web::http::http_request &request, taxii::service &service)
+namespace taxii
 {
-    std::stringstream ss;
-#if 0
-    rapidjson::Writer<rapidjson::OStreamWrapper> w(rapidjson::OStreamWrapper(ss));
-
-    w.StartObject();
-    w.Key(taxii::taxii2::keys::title);
-    w.String(service.title().c_str(), service.title().length(), false);
-    w.Key(taxii::taxii2::keys::description);
-    w.String(service.description().c_str(), service.description().length(), false);
-    w.Key(taxii::taxii2::keys::contact);
-    w.String(service.contact().c_str(), service.contact().length(), false);
-    w.Key(taxii::taxii2::keys::dflt);
-    w.String(service.uri.c_str(), service.uri.length(), false);
-
-    w.Key(taxii::taxii2::keys::api_roots);
-    w.StartArray();
-    for(auto const &i : service.apis())
+    void taxii2_discovery(
+            web::http::http_request &request,
+            web::http::http_response &response,
+            taxii::service &service)
     {
-        w.String(i.uri.c_str(), i.uri.length());
-    }
-    w.EndArray();
-#endif
+        web::json::value o = web::json::value::object();
+        web::json::value a = web::json::value::array();
 
-    request.reply(web::http::status_codes::OK, ss.str());
+        o[taxii::taxii2::keys::title] = web::json::value(service.title());
+        o[taxii::taxii2::keys::description] = web::json::value(service.description());
+        o[taxii::taxii2::keys::contact] = web::json::value(service.contact());
+        o[taxii::taxii2::keys::dflt] = web::json::value(""); /* TODO: default API */
+
+        for(auto const &i : service.apis())
+        {
+            a[a.size()] = web::json::value::string(i->uri());
+        }
+
+        o[taxii::taxii2::keys::api_roots] = a;
+
+        response.set_body(o);
+    }
 }
 
 void taxii2_api_root(web::http::http_request &request, taxii::api &api)
 {
-    std::stringstream ss;
-#if 0
-    rapidjson::Writer w(ss);
+    web::json::value o = web::json::value::object();
 
-    w.StartObject();
-    w.Key(taxii::taxii2::keys::title);
-    w.String(api.title.c_str(), api.title.length(), false);
-    w.Key(taxii::taxii2::keys::description);
-    w.String(api.description().c_str(), api.description().length(), false);
-    w.Key(taxii::taxii2::keys::versions);
-    w.StartArray();
-    w.EndArray();
-    w.Key(taxii::taxii2::keys::max_content_length);
-    w.Uint64(api.max_content_length);
-    w.EndObject();
-#endif
+    o[taxii::taxii2::keys::title] = web::json::value(api.title());
+    o[taxii::taxii2::keys::description] = web::json::value(api.description());
+    o[taxii::taxii2::keys::versions] = web::json::value::array();
+    o[taxii::taxii2::keys::max_content_length] = web::json::value::number(0);
 
-    request.reply(web::http::status_codes::OK, ss.str());
+    request.reply(web::http::status_codes::OK, o);
 }
 
 /*
@@ -199,6 +187,21 @@ void taxii2_collections(web::http::http_request &request, taxii::api &api)
  */
 void taxii2_manifest(web::http::http_request &request, taxii::api &api)
 {
+    web::json::value o = web::json::value::object();
+    web::json::value a = web::json::value::array();
+
+    taxii::collection collection("", "", "");
+
+    for(auto const &stix_object : collection.objects())
+    {
+        web::json::value stix = web::json::value::object();
+
+        stix[taxii::taxii2::keys::id] = web::json::value::string("");
+
+    }
+
+    o[taxii::taxii2::keys::objects] = a;
+
     std::stringstream ss;
 #if 0
     rapidjson::Writer<rapidjson::OStreamWrapper> w(rapidjson::OStreamWrapper(ss));

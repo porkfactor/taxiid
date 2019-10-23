@@ -3,7 +3,9 @@
 
 namespace taxii
 {
-    service::service()
+    service::service(service::string_type const &t, service::string_type const &d) :
+        title_(t),
+        description_(d)
     {
 
     }

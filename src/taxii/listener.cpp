@@ -7,7 +7,8 @@ namespace taxii
     class basic_taxii_listener
     {
     public:
-        basic_taxii_listener(web::http::uri const &uri) : listener_(uri)
+        basic_taxii_listener(web::http::uri const &uri) :
+            listener_(uri)
         {
             spdlog::info("creating endpoint {}", uri.to_string());
 
@@ -22,54 +23,25 @@ namespace taxii
             listener_.close();
         }
 
-        void get(web::http::http_request request)
+        virtual void perform_get(web::http::http_request &request, web::http::http_response &response)
         {
-            web::http::http_response response(web::http::status_codes::MethodNotAllowed);
-
-            spdlog::info("GET {}", request.request_uri().to_string());
-
-            if(check_headers(request.headers()))
-            {
-
-            }
-            else
-            {
-
-            }
-
-            request.reply(response);
-
-
-            /*
-            * 2/ check authentication method(s)
-            * 3/ check uri, handover to handler
-            * 4/ check
-            * 
-            */
+            response.set_status_code(web::http::status_codes::MethodNotAllowed);
         }
 
-        void post(web::http::http_request request)
+        virtual void perform_post(web::http::http_request &request, web::http::http_response &response)
         {
-            spdlog::info("POST {}", request.request_uri().to_string());
-
-            if(check_headers(request.headers()))
-            {
-                request.reply(web::http::status_codes::OK);
-            }
-            else
-            {
-                request.reply(web::http::status_codes::NotFound);
-            }
+            response.set_status_code(web::http::status_codes::MethodNotAllowed);
         }
 
     protected:
-        bool check_headers(web::http::http_headers const &headers)
+        bool check_headers(web::http::http_request const &request, web::http::http_response &response)
         {
-            for(auto const &header : headers)
+            for(auto const &header : request.headers())
             {
                 if(header.first == web::http::header_names::accept)
                 {
-
+                    /* TODO: this isn't the way to do it! */
+                    response.headers().set_content_type(header.second);
                 }
                 else if(header.first == web::http::header_names::accept_ranges)
                 {
@@ -101,43 +73,74 @@ namespace taxii
         }
 
     private:
+        void get(web::http::http_request request)
+        {
+            web::http::http_response response(web::http::status_codes::OK);
+
+            spdlog::info("GET {}", request.request_uri().to_string());
+
+            if(check_headers(request, response))
+            {
+                perform_get(request, response);
+            }
+            else
+            {
+
+            }
+
+            request.reply(response);
+        }
+
+        void post(web::http::http_request request)
+        {
+            web::http::http_response response(web::http::status_codes::MethodNotAllowed);
+
+            spdlog::info("POST {}", request.request_uri().to_string());
+
+            if(check_headers(request, response))
+            {
+                perform_post(request, response);
+            }
+            else
+            {
+
+            }
+
+            request.reply(response);
+        }
+
         web::http::experimental::listener::http_listener listener_;
     };
 
-    class basic_taxii_service
+    extern void taxii2_discovery(web::http::http_request &request,
+        web::http::http_response &response,
+        taxii::service &service);
+
+
+    class basic_discovery_service : public basic_taxii_listener
     {
     public:
-        basic_taxii_service(web::http::uri const &uri) :
-            listener_(uri)
+        basic_discovery_service(web::http::uri const &uri, std::shared_ptr<taxii::service> s) :
+            basic_taxii_listener(uri),
+            service_(s)
         {
 
         }
 
-    protected:
-
-    private:
-        basic_taxii_listener listener_;
-    };
-
-    class basic_discovery_service : public basic_taxii_service
-    {
-    public:
-        basic_discovery_service(web::http::uri const &uri, std::shared_ptr<taxii::service> s) :
-            basic_taxii_service(uri),
-            service_(s)
+        virtual void perform_get(web::http::http_request &request, web::http::http_response &response) override
         {
-
+            taxii2_discovery(request, response, *service_);
         }
 
     private:
         std::shared_ptr<taxii::service> service_;
     };
 
-    class basic_api_service : public basic_taxii_service
+    class basic_api_service : public basic_taxii_listener
     {
     public:
         basic_api_service(web::http::uri const &uri, std::shared_ptr<taxii::api> a) :
-            basic_taxii_service(uri),
+            basic_taxii_listener(uri),
             api_(a)
         {
 
@@ -147,11 +150,11 @@ namespace taxii
         std::shared_ptr<taxii::api> api_;
     };
 
-    class basic_status_service : public basic_taxii_service
+    class basic_status_service : public basic_taxii_listener
     {
     public:
         basic_status_service(web::http::uri const &uri, std::shared_ptr<taxii::api> a) :
-            basic_taxii_service(uri),
+            basic_taxii_listener(uri),
             api_(a)
         {
 
@@ -161,11 +164,11 @@ namespace taxii
         std::shared_ptr<taxii::api> api_;
     };
 
-    class basic_collection_service : public basic_taxii_service
+    class basic_collection_service : public basic_taxii_listener
     {
     public:
         basic_collection_service(web::http::uri const &uri, std::shared_ptr<taxii::api> a) :
-            basic_taxii_service(uri),
+            basic_taxii_listener(uri),
             api_(a)
         {
 
@@ -194,9 +197,11 @@ namespace taxii
 
             virtual void onCreateApi(std::shared_ptr<taxii::api> api) override
             {
-                new basic_api_service(listener_->root_.to_string() + api->title(), api);
-                new basic_status_service(listener_->root_.to_string() + api->title() + "/status", api);
-                new basic_collection_service(listener_->root_.to_string() + api->title() + "/collections", api);
+                api->uri(listener_->root_.to_string() + api->title());
+
+                new basic_api_service(api->uri(), api);
+                new basic_status_service(api->uri() + "/status", api);
+                new basic_collection_service(api->uri() + "/collections", api);
             } 
 
         private:
@@ -208,26 +213,6 @@ namespace taxii
         std::unique_ptr<basic_discovery_service> discovery_;
         service_listener service_listener_;
     };
-
-#if 0
-    class listener
-    {
-    public:
-        listener(std::string const &uri, std::shared_ptr<service> s) :
-            root_(uri),
-            service_(s),
-            service_listener_(this)
-        {
-            discovery_.reset(new basic_discovery_service(root_.to_string() + "taxii", s));
-
-            s->addListener(&service_listener_);
-        }
-
-        web::http::uri const &root() const { root_; }
-
-    private:
-    };
-#endif
 
     listener::listener(std::string const &uri, std::shared_ptr<taxii::service> s) :
         pimpl_(new impl(uri, s))

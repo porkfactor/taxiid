@@ -22,7 +22,7 @@ int main(int argc, const char * argv[]) {
 
     try
     {
-        std::shared_ptr<taxii::service> ts(std::make_shared<taxii::service>());
+        std::shared_ptr<taxii::service> ts(std::make_shared<taxii::service>("test", "test service"));
         taxii::listener tl("http://mimsy.local:6502", ts);
 
         ts->createApi("abc");

@@ -4,6 +4,10 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
+/*
+ * basically a big old set of stubs to give 1.x-ish API where 1.x isn't present (e.g. the platform I'm working on!)
+ */
+
 #if !defined SPDLOG_VER_MAJOR
 namespace spdlog
 {

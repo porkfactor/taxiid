@@ -88,6 +88,9 @@ namespace taxii
 
         string_type const &title() const { return title_; }
         string_type const &description() const { return description_; }
+        string_type const &uri() const { return uri_; }
+
+        void uri(string_type const &u) { uri_ = u; }
 
         collection_container_type const &collections() const { return collections_; }
 
@@ -97,6 +100,7 @@ namespace taxii
         collection_container_type collections_;
         string_type title_;
         string_type description_;
+        string_type uri_;
     };
 
     class service
@@ -113,15 +117,8 @@ namespace taxii
             virtual void onDestroyApi(std::shared_ptr<api>) { };
         };
 
-        service();
+        service(string_type const &t, string_type const &d);
         ~service();
-
-        service(string_type const &t, string_type const &d) :
-            title_(t),
-            description_(d)
-        {
-
-        }
 
         string_type const &title() const { return title_; }
         string_type const &description() const { return description_; }
